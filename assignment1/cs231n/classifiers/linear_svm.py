@@ -80,7 +80,24 @@ def svm_loss_vectorized(W, X, y, reg):
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
-  pass
+  scores = X.dot(W)
+
+  row_idx = np.arange(X.shape[0])
+  
+  # get correct_scores
+  correct_scores = scores[row_idx, y]
+  # calculate max margin
+  margins = np.maximum(0, (scores - np.array([correct_scores]).T) + 1)
+  # set correct_scores margin = 0
+  margins[row_idx, y] = 0
+  # row sum
+  loss = np.sum(margins)
+
+  # average loss
+  loss /= X.shape[0]
+
+  # add reg
+  loss += reg*np.sum(np.sum(np.square(W), axis=1), axis=0)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -95,7 +112,18 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
+  # for every margin > 0, decrease dw_yi by x_i, increase dw_j by x_i
+  margins[margins > 0] = 1
+  margins[margins < 0] = 0
+  margins[np.arange(0, X.shape[0]), y] = 0
+  margins[np.arange(0, X.shape[0]), y] = -1 * np.sum(margins, axis=1)
+  dW = X.T.dot(margins)
+    
+  # average dW
+  dW /= X.shape[0]
+    
+  # Add regularization gradient to the dW
+  dW += 2*reg*W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
