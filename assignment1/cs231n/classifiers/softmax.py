@@ -48,7 +48,7 @@ def softmax_loss_naive(W, X, y, reg):
   dW /= N
 
   # reg
-  loss += 0.5 * reg * np.sum(W*W)
+  loss += reg * np.sum(W*W)
   dW += reg*W
   #############################################################################
   #                          END OF YOUR CODE                                 #
@@ -88,7 +88,7 @@ def softmax_loss_vectorized(W, X, y, reg):
     
   loss /= N
   dW /= N
-  loss += 0.5 * reg * np.sum(W*W)
+  loss += reg * np.sum(W*W)
   dW += reg*W
   #############################################################################
   #                          END OF YOUR CODE                                 #
