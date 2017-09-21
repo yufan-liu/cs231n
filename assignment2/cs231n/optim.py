@@ -65,7 +65,9 @@ def sgd_momentum(w, dw, config=None):
     # TODO: Implement the momentum update formula. Store the updated value in #
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
-    pass
+    # Momentum update
+    v = config.get('momentum') * v - config.get('learning_rate') * dw # integrate velocity
+    next_w = w + v # integrate position
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -99,7 +101,9 @@ def rmsprop(x, dx, config=None):
     # in the next_x variable. Don't forget to update cache value stored in    #
     # config['cache'].                                                        #
     ###########################################################################
-    pass
+    cache = config.get('decay_rate') * config.get('cache') + (1 - config.get('decay_rate')) * dx**2
+    next_x = x - config.get('learning_rate') * dx / (np.sqrt(cache) + config.get('epsilon'))
+    config['cache'] = cache
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -136,7 +140,15 @@ def adam(x, dx, config=None):
     # the next_x variable. Don't forget to update the m, v, and t variables   #
     # stored in config.                                                       #
     ###########################################################################
-    pass
+    # t is your iteration counter going from 1 to infinity
+    m = config.get('beta1')*config.get('m') + (1-config.get('beta1'))*dx
+    mt = m / (1-config.get('beta1')**config.get('t'))
+    v = config.get('beta2')*config.get('v') + (1-config.get('beta2'))*(dx**2)
+    vt = v / (1-config.get('beta2')**config.get('t'))
+    next_x = x - config.get('learning_rate') * mt / (np.sqrt(vt) + config.get('epsilon'))
+    config['m'] = m
+    config['v'] = v
+    config['t'] = config.get('t')+1
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
