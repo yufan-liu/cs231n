@@ -188,8 +188,9 @@ class FullyConnectedNet(object):
         for i in range(1, self.num_layers):
             self.params['W{}'.format(i)] = weight_scale * np.random.randn(previous_layer_neurons, hidden_dims[i-1])
             self.params['b{}'.format(i)] = np.zeros(hidden_dims[i-1])
-#            self.params['gamma{}'.format(i)] = np.ones(hidden_dims[i-1])
-#            self.params['beta{}'.format(i)] = np.zeros(hidden_dims[i-1])
+            if i < self.num_layers - 1 and self.use_batchnorm:
+                self.params['gamma{}'.format(i)] = np.ones(hidden_dims[i-1])
+                self.params['beta{}'.format(i)] = np.zeros(hidden_dims[i-1])
             previous_layer_neurons = hidden_dims[i-1]
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -251,7 +252,16 @@ class FullyConnectedNet(object):
         hout = X
         cache = []
         for i in range(1, self.num_layers-1):
-            hout, c = affine_relu_forward(hout, self.params['W{}'.format(i)], self.params['b{}'.format(i)])
+            if self.use_batchnorm:
+                hout, c = affine_bn_relu_forward(hout, self.params['W{}'.format(i)], self.params['b{}'.format(i)], self.params['gamma{}'.format(i)], self.params['beta{}'.format(i)], self.bn_params[i])
+            else:
+                hout, c = affine_relu_forward(hout, self.params['W{}'.format(i)], self.params['b{}'.format(i)])
+
+            # drop out
+            if self.use_dropout:
+                hout, c_dropout = dropout_forward(hout, self.dropout_param)
+                c += (c_dropout,)
+            
             cache.append(c)
         scores, c = affine_forward(hout, self.params['W{}'.format(self.num_layers-1)], self.params['b{}'.format(self.num_layers-1)])
         cache.append(c)
@@ -284,7 +294,15 @@ class FullyConnectedNet(object):
                 dx, dw, db = affine_backward(dx, forward_cache)                
                 w = forward_cache[1]
             else:
-                dx, dw, db = affine_relu_backward(dx, forward_cache)
+                if self.use_dropout:
+                    dx = dropout_backward(dx, forward_cache[-1])
+                    forward_cache = forward_cache[:-1]
+                if self.use_batchnorm:
+                    dx, dw, db, dgamma, dbeta = affine_bn_relu_backward(dx, forward_cache)
+                    grads['gamma{}'.format(i)] = dgamma
+                    grads['beta{}'.format(i)] = dbeta
+                else:
+                    dx, dw, db = affine_relu_backward(dx, forward_cache)
                 w = forward_cache[0][1]
             grads['W{}'.format(i)] = dw
             grads['W{}'.format(i)] += self.reg * w
